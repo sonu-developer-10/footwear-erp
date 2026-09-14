@@ -2,221 +2,237 @@
 <html lang="hi">
 <head>
     <meta charset="UTF-8">
-    <title>Staff & Salary Management</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Management & Report</title>
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; padding: 20px; color: #0f172a; }
-        .card { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
-        .grid { display: flex; gap: 15px; flex-wrap: wrap; }
-        .form-group { flex: 1; min-width: 150px; }
-        label { font-size: 0.75rem; font-weight: 700; color: #475569; display: block; margin-bottom: 4px; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; }
-        button { background: #2563eb; color: white; padding: 10px 15px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { padding: 10px; border: 1px solid #cbd5e1; text-align: left; font-size: 0.88rem; }
-        th { background: #f1f5f9; }
-        .stat-box { background: #eff6ff; padding: 15px; border-radius: 8px; border-left: 4px solid #2563eb; }
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f6f9; }
+        h2 { color: #1e293b; border-bottom: 2px solid #2563eb; padding-bottom: 5px; }
+        .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #2563eb; color: white; }
+        button { cursor: pointer; padding: 6px 12px; border: none; border-radius: 4px; font-weight: bold; }
+        .btn-add { background-color: #10b981; color: white; }
+        .btn-edit { background-color: #eab308; color: white; margin-right: 5px; }
+        .btn-delete { background-color: #ef4444; color: white; }
+        input, select { padding: 8px; margin: 5px 0; width: 98%; border: 1px solid #ccc; border-radius: 4px; }
     </style>
 </head>
 <body>
 
-<div style="display:flex; justify-content:space-between; align-items:center;" class="card">
-    <h2>👥 Staff & Salary Management</h2>
-    <a href="/admin.html" style="text-decoration:none; background:#475569; color:white; padding:8px 12px; border-radius:6px; font-weight:bold;">← Admin Panel</a>
-</div>
+    <h2>👤 Staff Management Panel</h2>
 
-<!-- 1. ADD NEW STAFF -->
-<div class="card">
-    <h3>➕ Naya Staff Add Karein</h3>
-    <div class="grid">
-        <div class="form-group"><label>Staff Name</label><input type="text" id="st_name" placeholder="Ramesh Kumar"></div>
-        <div class="form-group"><label>Mobile No</label><input type="text" id="st_phone" placeholder="9876543210"></div>
-        <div class="form-group"><label>Monthly Salary (₹)</label><input type="number" id="st_salary" placeholder="12000"></div>
-        <div class="form-group"><label>Joining Date</label><input type="date" id="st_date"></div>
-        <div class="form-group" style="align-self: flex-end;"><button onclick="addStaff()">Save Staff</button></div>
-    </div>
-</div>
-
-<!-- 2. DAILY ATTENDANCE & ADVANCE -->
-<div class="grid">
-    <!-- Attendance -->
-    <div class="card" style="flex: 1;">
-        <h3>📅 Daily Attendance (Haazri)</h3>
-        <div class="form-group" style="margin-bottom:10px;"><label>Select Staff</label><select id="att_staff"></select></div>
-        <div class="form-group" style="margin-bottom:10px;"><label>Date</label><input type="date" id="att_date"></div>
-        <div class="form-group" style="margin-bottom:10px;">
-            <label>Status</label>
-            <select id="att_status">
-                <option value="Present">Present (P)</option>
-                <option value="Half-Day">Half-Day (HD)</option>
-                <option value="Absent">Absent (A)</option>
-            </select>
-        </div>
-        <button onclick="markAttendance()" style="background:#10b981; width:100%;">Mark Haazri</button>
+    <!-- Add Staff Form -->
+    <div class="card">
+        <h3>Naya Staff Add Karein</h3>
+        <input type="text" id="s_name" placeholder="Staff Ka Naam">
+        <input type="text" id="s_role" placeholder="Role (e.g., Salesman, Helper)">
+        <input type="number" id="s_salary" placeholder="Fixed Monthly Salary">
+        <button class="btn-add" onclick="addStaff()">+ Staff Add Karein</button>
     </div>
 
-    <!-- Advance / Kharcha -->
-    <div class="card" style="flex: 1;">
-        <h3>💸 Add Advance / Kharcha (Paise Diye)</h3>
-        <div class="form-group" style="margin-bottom:10px;"><label>Select Staff</label><select id="adv_staff"></select></div>
-        <div class="form-group" style="margin-bottom:10px;"><label>Date</label><input type="date" id="adv_date"></div>
-        <div class="form-group" style="margin-bottom:10px;"><label>Amount (₹)</label><input type="number" id="adv_amount" placeholder="500"></div>
-        <div class="form-group" style="margin-bottom:10px;"><label>Note / Reason</label><input type="text" id="adv_notes" placeholder="Chai Paani / Emergency"></div>
-        <button onclick="addAdvance()" style="background:#f59e0b; width:100%;">Record Advance</button>
-    </div>
-</div>
-
-<!-- 3. MONTHLY SALARY HISAB & REPORT -->
-<div class="card">
-    <h3>📊 Monthly Salary Hisab & Slip</h3>
-    <div class="grid">
-        <div class="form-group"><label>Select Staff</label><select id="rep_staff"></select></div>
-        <div class="form-group"><label>Select Month</label><input type="month" id="rep_month"></div>
-        <div class="form-group" style="align-self: flex-end;"><button onclick="loadReport()" style="background:#8b5cf6;">View Salary Hisab</button></div>
-    </div>
-
-    <div id="reportResult" style="margin-top:20px; display:none;">
-        <hr style="margin-bottom:15px;">
-        <div class="grid">
-            <div class="form-group stat-box">
-                <small>Fixed Monthly Salary</small>
-                <h3 id="res_salary">₹0</h3>
-            </div>
-            <div class="form-group stat-box" style="border-color:#10b981;">
-                <small>Working Days (P + HD)</small>
-                <h3 id="res_days">0 Days</h3>
-            </div>
-            <div class="form-group stat-box" style="border-color:#8b5cf6;">
-                <small>Earned Salary</small>
-                <h3 id="res_earned">₹0</h3>
-            </div>
-            <div class="form-group stat-box" style="border-color:#ef4444;">
-                <small>Total Advance Taken</small>
-                <h3 id="res_advance" style="color:#ef4444;">₹0</h3>
-            </div>
-            <div class="form-group stat-box" style="border-color:#059669; background:#ecfdf5;">
-                <small>Final Net Payable (Salary)</small>
-                <h3 id="res_net" style="color:#059669;">₹0</h3>
-            </div>
-        </div>
-
-        <h4 style="margin-top:15px;">Advance Payments Breakdown:</h4>
+    <!-- Staff List -->
+    <div class="card">
+        <h3>Staff List</h3>
         <table>
             <thead>
-                <tr><th>Date</th><th>Amount Given</th><th>Reason / Notes</th></tr>
+                <tr>
+                    <th>ID</th>
+                    <th>Naam</th>
+                    <th>Role</th>
+                    <th>Salary (₹)</th>
+                    <th>Action</th>
+                </tr>
             </thead>
-            <tbody id="adv_table_body"></tbody>
+            <tbody id="staffTable"></tbody>
         </table>
     </div>
-</div>
 
-<script>
-    document.getElementById('att_date').valueAsDate = new Date();
-    document.getElementById('adv_date').valueAsDate = new Date();
-    document.getElementById('st_date').valueAsDate = new Date();
+    <!-- Attendance List -->
+    <div class="card">
+        <h3>Haazri (Attendance) Report</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Staff Name</th>
+                    <th>Status</th>
+                    <th>Time</th>
+                    <th>Location</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="attendanceTable"></tbody>
+        </table>
+    </div>
 
-    const today = new Date();
-    document.getElementById('rep_month').value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+    <!-- Advances List -->
+    <div class="card">
+        <h3>Advance Details</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Staff Name</th>
+                    <th>Amount (₹)</th>
+                    <th>Notes</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="advancesTable"></tbody>
+        </table>
+    </div>
 
-    let staffList = [];
+    <script>
+        // Page Load Hotey Hi Data Fetch Karein
+        window.onload = function() {
+            loadAllData();
+        };
 
-    async function loadStaff() {
-        const res = await fetch('/api/staff');
-        staffList = await res.json();
-        
-        const selects = ['att_staff', 'adv_staff', 'rep_staff'];
-        selects.forEach(id => {
-            const el = document.getElementById(id);
-            el.innerHTML = '<option value="">-- Select Staff --</option>';
-            staffList.forEach(s => {
-                el.innerHTML += `<option value="${s.id}">${s.name} (Salary: ₹${s.monthly_salary})</option>`;
-            });
-        });
-    }
-
-    async function addStaff() {
-        const name = document.getElementById('st_name').value;
-        const phone = document.getElementById('st_phone').value;
-        const monthly_salary = document.getElementById('st_salary').value;
-        const joining_date = document.getElementById('st_date').value;
-
-        if(!name || !monthly_salary) return alert("Staff ka Naam aur Salary dalein!");
-
-        await fetch('/api/staff', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ name, phone, monthly_salary, joining_date })
-        });
-
-        alert("Staff successfully add ho gaya!");
-        document.getElementById('st_name').value = '';
-        document.getElementById('st_salary').value = '';
-        loadStaff();
-    }
-
-    async function markAttendance() {
-        const staff_id = document.getElementById('att_staff').value;
-        const date = document.getElementById('att_date').value;
-        const status = document.getElementById('att_status').value;
-
-        if(!staff_id) return alert("Staff select karein!");
-
-        await fetch('/api/attendance', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ staff_id, date, status })
-        });
-
-        alert("Haazri Mark Ho Gayi!");
-    }
-
-    async function addAdvance() {
-        const staff_id = document.getElementById('adv_staff').value;
-        const date = document.getElementById('adv_date').value;
-        const amount = document.getElementById('adv_amount').value;
-        const notes = document.getElementById('adv_notes').value;
-
-        if(!staff_id || !amount) return alert("Staff aur Advance Amount dalein!");
-
-        await fetch('/api/staff-advance', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ staff_id, date, amount, notes })
-        });
-
-        alert("Advance Payment Entry Ho Gayi!");
-        document.getElementById('adv_amount').value = '';
-        document.getElementById('adv_notes').value = '';
-    }
-
-    async function loadReport() {
-        const staff_id = document.getElementById('rep_staff').value;
-        const month = document.getElementById('rep_month').value;
-
-        if(!staff_id || !month) return alert("Staff aur Month dono select karein!");
-
-        const res = await fetch(`/api/staff-report/${staff_id}/${month}`);
-        const data = await res.json();
-
-        document.getElementById('reportResult').style.display = 'block';
-        document.getElementById('res_salary').innerText = `₹${data.monthly_salary}`;
-        document.getElementById('res_days').innerText = `${data.total_working_days} Days (P: ${data.present_days}, HD: ${data.half_days})`;
-        document.getElementById('res_earned').innerText = `₹${data.earned_salary}`;
-        document.getElementById('res_advance').innerText = `₹${data.total_advance}`;
-        document.getElementById('res_net').innerText = `₹${data.net_payable}`;
-
-        const tbody = document.getElementById('adv_table_body');
-        tbody.innerHTML = '';
-        if(data.advances_list.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Is mahine koi advance nahi liya gaya.</td></tr>';
-        } else {
-            data.advances_list.forEach(a => {
-                tbody.innerHTML += `<tr><td>${a.date}</td><td><b>₹${a.amount}</b></td><td>${a.notes || '-'}</td></tr>`;
-            });
+        async function loadAllData() {
+            loadStaff();
+            loadAttendance();
+            loadAdvances();
         }
-    }
 
-    loadStaff();
-</script>
+        // --- 1. STAFF FUNCTIONS ---
+        async function loadStaff() {
+            const res = await fetch('/api/staff');
+            const data = await res.json();
+            let rows = '';
+            data.forEach(s => {
+                rows += `<tr>
+                    <td>${s.id}</td>
+                    <td><b>${s.name}</b></td>
+                    <td>${s.role || '-'}</td>
+                    <td>₹${s.fixed_salary}</td>
+                    <td>
+                        <button class="btn-edit" onclick="editStaff(${s.id}, '${s.name}', '${s.role || ''}', ${s.fixed_salary})">✏️ Edit</button>
+                        <button class="btn-delete" onclick="deleteStaff(${s.id})">🗑️ Delete</button>
+                    </td>
+                </tr>`;
+            });
+            document.getElementById('staffTable').innerHTML = rows;
+        }
+
+        async function addStaff() {
+            const name = document.getElementById('s_name').value;
+            const role = document.getElementById('s_role').value;
+            const fixed_salary = document.getElementById('s_salary').value;
+            if(!name || !fixed_salary) return alert("Naam aur Salary bharna zaroori hai!");
+
+            await fetch('/api/staff', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ name, role, fixed_salary })
+            });
+            document.getElementById('s_name').value = '';
+            document.getElementById('s_role').value = '';
+            document.getElementById('s_salary').value = '';
+            loadStaff();
+        }
+
+        async function editStaff(id, oldName, oldRole, oldSalary) {
+            const name = prompt("Naya Naam:", oldName);
+            const role = prompt("Naya Role:", oldRole);
+            const fixed_salary = prompt("Nayi Salary:", oldSalary);
+            if (name && fixed_salary) {
+                await fetch('/api/staff/' + id, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, role, fixed_salary })
+                });
+                loadStaff();
+            }
+        }
+
+        async function deleteStaff(id) {
+            if (confirm("Kya aap is staff ko delete karna chahte hain? Unka saara record saaf ho jayega.")) {
+                await fetch('/api/staff/' + id, { method: 'DELETE' });
+                loadAllData();
+            }
+        }
+
+        // --- 2. ATTENDANCE FUNCTIONS ---
+        async function loadAttendance() {
+            const res = await fetch('/api/attendance');
+            const data = await res.json();
+            let rows = '';
+            data.forEach(a => {
+                const mapLink = a.location ? `<a href="https://maps.google.com/?q=${a.location}" target="_blank">📍 Map</a>` : 'N/A';
+                rows += `<tr>
+                    <td>${a.date}</td>
+                    <td><b>${a.staff_name || 'Staff #' + a.staff_id}</b></td>
+                    <td>${a.status}</td>
+                    <td>${a.timestamp || '-'}</td>
+                    <td>${mapLink}</td>
+                    <td>
+                        <button class="btn-edit" onclick="editAttendance(${a.id}, '${a.status}')">✏️ Edit</button>
+                        <button class="btn-delete" onclick="deleteAttendance(${a.id})">🗑️ Delete</button>
+                    </td>
+                </tr>`;
+            });
+            document.getElementById('attendanceTable').innerHTML = rows;
+        }
+
+        async function editAttendance(id, oldStatus) {
+            const status = prompt("Status badlein (Present / Half-Day / Absent):", oldStatus);
+            if (status) {
+                await fetch('/api/attendance/' + id, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status })
+                });
+                loadAttendance();
+            }
+        }
+
+        async function deleteAttendance(id) {
+            if (confirm("Kya ye attendance entry delete karni hai?")) {
+                await fetch('/api/attendance/' + id, { method: 'DELETE' });
+                loadAttendance();
+            }
+        }
+
+        // --- 3. ADVANCE FUNCTIONS ---
+        async function loadAdvances() {
+            const res = await fetch('/api/advances');
+            const data = await res.json();
+            let rows = '';
+            data.forEach(adv => {
+                rows += `<tr>
+                    <td>${adv.date}</td>
+                    <td><b>${adv.staff_name || 'Staff #' + adv.staff_id}</b></td>
+                    <td>₹${adv.amount}</td>
+                    <td>${adv.notes || '-'}</td>
+                    <td>
+                        <button class="btn-edit" onclick="editAdvance(${adv.id}, ${adv.amount}, '${adv.notes || ''}')">✏️ Edit</button>
+                        <button class="btn-delete" onclick="deleteAdvance(${adv.id})">🗑️ Delete</button>
+                    </td>
+                </tr>`;
+            });
+            document.getElementById('advancesTable').innerHTML = rows;
+        }
+
+        async function editAdvance(id, oldAmount, oldNotes) {
+            const amount = prompt("Naya Amount:", oldAmount);
+            const notes = prompt("Naya Note:", oldNotes);
+            if (amount) {
+                await fetch('/api/advances/' + id, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount, notes })
+                });
+                loadAdvances();
+            }
+        }
+
+        async function deleteAdvance(id) {
+            if (confirm("Kya ye advance record delete karna hai?")) {
+                await fetch('/api/advances/' + id, { method: 'DELETE' });
+                loadAdvances();
+            }
+        }
+    </script>
 </body>
 </html>

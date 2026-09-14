@@ -143,6 +143,71 @@
         alert("Bill save ho gaya! Admin Panel par update ho jayega.");
     }
 
+
+    // === 1. Staff Delete & Edit Functions ===
+async function deleteStaff(id) {
+    if (confirm("Kya aap sach me is Staff ko delete karna chahte hain? Unka sara record delete ho jayega.")) {
+        await fetch(`/api/staff/${id}`, { method: 'DELETE' });
+        loadStaffData(); // Function to refresh tables
+    }
+}
+
+async function editStaff(id, oldName, oldRole, oldSalary) {
+    const name = prompt("Naya Naam:", oldName);
+    const role = prompt("Naya Role:", oldRole);
+    const fixed_salary = prompt("Nayi Fixed Salary:", oldSalary);
+
+    if (name && fixed_salary) {
+        await fetch(`/api/staff/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, role, fixed_salary })
+        });
+        loadStaffData();
+    }
+}
+
+// === 2. Attendance Delete & Edit Functions ===
+async function deleteAttendance(id) {
+    if (confirm("Kya aap ye attendance entry delete karna chahte hain?")) {
+        await fetch(`/api/attendance/${id}`, { method: 'DELETE' });
+        loadAttendanceData();
+    }
+}
+
+async function editAttendance(id, currentStatus) {
+    const status = prompt("Status badlein (Present / Half-Day / Absent):", currentStatus);
+    if (status) {
+        await fetch(`/api/attendance/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status })
+        });
+        loadAttendanceData();
+    }
+}
+
+// === 3. Advance Delete & Edit Functions ===
+async function deleteAdvance(id) {
+    if (confirm("Kya aap ye advance payment entry delete karna chahte hain?")) {
+        await fetch(`/api/advances/${id}`, { method: 'DELETE' });
+        loadAdvanceData();
+    }
+}
+
+async function editAdvance(id, oldAmount, oldNotes) {
+    const amount = prompt("Naya Amount:", oldAmount);
+    const notes = prompt("Naya Note:", oldNotes);
+    if (amount) {
+        await fetch(`/api/advances/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount, notes })
+        });
+        loadAdvanceData();
+    }
+}
+
     loadStaff();
 </script>
 </body>
