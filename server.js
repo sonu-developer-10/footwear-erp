@@ -187,6 +187,36 @@ app.delete('/api/advances/:id', (req, res) => {
     });
 });
 
+
+app.post('/api/wholesale-bill', (req, res) => {
+    const { 
+        bill_date, customer_id, customer_name, delivery_mode, vehicle_no, 
+        items, total_amount, paid_cash, paid_online, discount_amount, paid_amount, remaining_due 
+    } = req.body;
+
+    db.run(
+        `INSERT INTO bills (customer_id, customer_name, bill_date, total_amount, paid_cash, paid_online, discount_amount, paid_amount, remaining_due, status) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE')`,
+        [customer_id, customer_name, bill_date, total_amount, paid_cash || 0, paid_online || 0, discount_amount || 0, paid_amount || 0, remaining_due],
+        function(err) {
+            if (err) return res.status(500).json({ error: err.message });
+            const billId = this.lastID;
+
+            // Save Bill Items
+            const stmt = db.prepare(`INSERT INTO bill_items (bill_id, article_no, size, color, pairs, mrp, rate, amount) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
+            items.forEach(item => {
+                stmt.run([billId, item.article_no, item.size_set, item.color, item.pairs, item.mrp, item.rate, item.amt]);
+            });
+            stmt.finalize();
+
+            // Update Customer Ledger Balance
+            db.run(`UPDATE customers SET previous_due = ? WHERE id = ?`, [remaining_due, customer_id]);
+
+            res.json({ message: "Bill saved successfully", bill_id: billId });
+        }
+    );
+});
+
 // Dynamic Port Binding for Render
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {

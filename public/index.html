@@ -43,7 +43,6 @@
 <div class="bill-card">
     <div style="display: flex; justify-content: space-between; align-items: center;">
         <h2>📑 Wholesale Billing & Invoice</h2>
-        <!-- <a href="/admin.html" style="background:#475569; color:white; padding:8px 15px; border-radius:6px; text-decoration:none; font-weight:bold; font-size: 0.85rem;">← Admin Panel</a> -->
     </div>
     <hr style="margin: 15px 0;">
 
@@ -130,18 +129,30 @@
         <tbody id="bill_items"></tbody>
     </table>
 
-    <div class="row" style="margin-top: 20px;">
-        <div class="form-group">
-            <label>Today's Bill Total (₹)</label>
-            <input type="text" id="bill_total" value="0" readonly style="font-weight:700; font-size:1.1rem;">
-        </div>
-        <div class="form-group">
-            <label>Amount Paid Today (Jama) (₹)</label>
-            <input type="number" id="paid_today" value="0" oninput="calcNet()" style="font-size:1.1rem;">
-        </div>
-        <div class="form-group">
-            <label>Net Total Remaining Due (₹)</label>
-            <input type="text" id="net_due" value="0" readonly style="font-weight:700; color:#dc2626; font-size:1.1rem;">
+    <!-- UPDATED MULTI-PAYMENT & DISCOUNT SECTION -->
+    <div style="background: #eff6ff; padding: 15px; border-radius: 8px; border: 1px solid #bfdbfe; margin-top: 20px;">
+        <h4 style="margin: 0 0 10px 0; color: #1d4ed8;">💳 Payment & Discount Details</h4>
+        <div class="row">
+            <div class="form-group">
+                <label>Today's Bill Total (₹)</label>
+                <input type="text" id="bill_total" value="0" readonly style="font-weight:700; font-size:1.1rem; background:white;">
+            </div>
+            <div class="form-group">
+                <label>💵 Cash Received (₹)</label>
+                <input type="number" id="paid_cash" value="0" oninput="calcNet()" style="font-size:1.05rem;">
+            </div>
+            <div class="form-group">
+                <label>📱 Online / UPI (₹)</label>
+                <input type="number" id="paid_online" value="0" oninput="calcNet()" style="font-size:1.05rem;">
+            </div>
+            <div class="form-group">
+                <label>🏷️ Discount / Off (₹)</label>
+                <input type="number" id="discount_amount" value="0" placeholder="10-15" oninput="calcNet()" style="font-size:1.05rem;">
+            </div>
+            <div class="form-group">
+                <label>Net Total Remaining Due (₹)</label>
+                <input type="text" id="net_due" value="0" readonly style="font-weight:700; color:#dc2626; font-size:1.1rem; background:white;">
+            </div>
         </div>
     </div>
 
@@ -311,11 +322,16 @@
         calcNet();
     }
 
+    // UPDATED CALCNET FUNCTION WITH DISCOUNT & SPLIT PAYMENT
     function calcNet() {
         const prev = parseFloat(document.getElementById('party_due').value || 0);
         const bill = parseFloat(document.getElementById('bill_total').value || 0);
-        const paid = parseFloat(document.getElementById('paid_today').value || 0);
-        document.getElementById('net_due').value = (prev + bill) - paid;
+        const cash = parseFloat(document.getElementById('paid_cash').value || 0);
+        const online = parseFloat(document.getElementById('paid_online').value || 0);
+        const discount = parseFloat(document.getElementById('discount_amount').value || 0);
+
+        const totalPaid = cash + online;
+        document.getElementById('net_due').value = (prev + bill) - (totalPaid + discount);
     }
 
     async function submitBill() {
@@ -325,6 +341,10 @@
         if(!party) { alert("Wholesale Party select karein!"); return; }
         if(items.length === 0) { alert("Bill mein kam se kam 1 item add karein!"); return; }
 
+        const cash = parseFloat(document.getElementById('paid_cash').value || 0);
+        const online = parseFloat(document.getElementById('paid_online').value || 0);
+        const discount = parseFloat(document.getElementById('discount_amount').value || 0);
+
         const data = {
             bill_date: document.getElementById('bill_date').value,
             customer_id: partyId,
@@ -333,7 +353,10 @@
             vehicle_no: document.getElementById('vehicle').value,
             items: items,
             total_amount: parseFloat(document.getElementById('bill_total').value || 0),
-            paid_amount: parseFloat(document.getElementById('paid_today').value || 0),
+            paid_cash: cash,
+            paid_online: online,
+            discount_amount: discount,
+            paid_amount: cash + online,
             remaining_due: parseFloat(document.getElementById('net_due').value || 0)
         };
 
@@ -371,7 +394,7 @@
                         <td>${b.bill_date}</td>
                         <td><b>${b.customer_name}</b></td>
                         <td>₹${b.total_amount}</td>
-                        <td>₹${b.paid_amount}</td>
+                        <td>₹${b.paid_amount || 0}</td>
                         <td style="color:#dc2626; font-weight:bold;">₹${b.remaining_due}</td>
                         <td><span class="${isCancelled ? 'tag-cancelled' : 'tag-active'}">${b.status}</span></td>
                         <td>
@@ -409,7 +432,6 @@
 
             if(!bill) { alert("Bill details nahi mil paaye!"); return; }
 
-            // Customer address/phone Details find karna
             const custInfo = customers.find(c => c.id == bill.customer_id) || {};
             const custPhone = custInfo.mobile || custInfo.phone || 'N/A';
             const custAddress = [custInfo.address, custInfo.city].filter(Boolean).join(', ') || 'N/A';
@@ -453,7 +475,7 @@
                         </tr>
                     </table>
 
-                    <!-- PARTY & DELIVERY INFO (WITH ADDRESS & PHONE) -->
+                    <!-- PARTY & DELIVERY INFO -->
                     <table style="width: 100%; background: #f8fafc; padding: 12px; border-radius: 6px; margin-bottom: 15px; font-size: 13px;">
                         <tr>
                             <td style="border:none; width: 55%; vertical-align: top;">
@@ -501,9 +523,10 @@
                                         <td style="border:none; text-align: right; padding: 2px 0;">Today's Bill Total:</td>
                                         <td style="border:none; text-align: right; padding: 2px 0; font-weight: bold;">₹${bill.total_amount}</td>
                                     </tr>
+                                    ${bill.discount_amount ? `<tr><td style="border:none; text-align: right; padding: 2px 0; color: #d97706;">Discount / Roundoff:</td><td style="border:none; text-align: right; padding: 2px 0; font-weight: bold; color: #d97706;">-₹${bill.discount_amount}</td></tr>` : ''}
                                     <tr>
                                         <td style="border:none; text-align: right; padding: 2px 0; color: #166534;">Paid (Jama):</td>
-                                        <td style="border:none; text-align: right; padding: 2px 0; font-weight: bold; color: #166534;">₹${bill.paid_amount}</td>
+                                        <td style="border:none; text-align: right; padding: 2px 0; font-weight: bold; color: #166534;">₹${bill.paid_amount || 0}</td>
                                     </tr>
                                     <tr style="font-size: 15px; color: #dc2626;">
                                         <td style="border:none; text-align: right; padding: 5px 0; border-top: 2px solid #000;"><strong>Balance Due:</strong></td>
