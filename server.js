@@ -434,6 +434,23 @@ app.post('/api/self-attendance', (req, res) => {
     });
 });
 
+
+// Database Clean/Reset API Route
+app.get('/api/reset-database-danger-zone', (req, res) => {
+    db.serialize(() => {
+        db.run(`DROP TABLE IF EXISTS attendance`);
+        db.run(`DROP TABLE IF EXISTS advances`);
+        db.run(`DROP TABLE IF EXISTS staff`);
+        
+        // Dynamic re-creation of fresh tables
+        db.run(`CREATE TABLE staff (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, role TEXT, fixed_salary REAL)`);
+        db.run(`CREATE TABLE attendance (id INTEGER PRIMARY KEY AUTOINCREMENT, staff_id INTEGER, date TEXT, status TEXT, location TEXT, timestamp TEXT)`);
+        db.run(`CREATE TABLE advances (id INTEGER PRIMARY KEY AUTOINCREMENT, staff_id INTEGER, amount REAL, date TEXT, notes TEXT)`);
+    });
+    res.send("<h1>Database Reset Successful! Sara dummy data delete ho gaya hai.</h1>");
+});
+
+
 // app.listen(3000, () => console.log(`Wholesale ERP running on http://localhost:3000`));
 
 app.listen(3000, '0.0.0.0', () => {
