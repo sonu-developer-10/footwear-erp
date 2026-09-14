@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wholesale Bill & Invoice Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700&display=swap" rel="stylesheet">
+    <!-- html2pdf Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; padding: 20px; color: #0f172a; }
+        .bill-card { background: white; padding: 25px; border-radius: 12px; max-width: 1000px; margin: auto; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 30px; border: 1px solid #cbd5e1; }
+        .row { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+        .form-group { flex: 1; min-width: 120px; }
+        label { font-size: 0.72rem; font-weight: 700; color: #475569; display: block; margin-bottom: 4px; text-transform: uppercase; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 0.88rem; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 10px; border: 1px solid #cbd5e1; text-align: left; font-size: 0.85rem; }
+        th { background: #f1f5f9; font-weight: 700; }
+        .btn { background: #2563eb; color: white; padding: 14px 20px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; width: 100%; margin-top: 15px; font-size: 1rem; }
+        .btn-cancel { background: #ef4444; color: white; border: none; padding: 6px 10px; border-radius: 4px; font-weight: 700; cursor: pointer; }
+        .btn-preview { background: #0284c7; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-weight: 700; cursor: pointer; margin-right: 5px; }
+        .tag-cancelled { color: #dc2626; font-weight: bold; background: #fee2e2; padding: 4px 8px; border-radius: 4px; }
+        .tag-active { color: #166534; font-weight: bold; background: #dcfce7; padding: 4px 8px; border-radius: 4px; }
+
+        /* MODAL PREVIEW STYLES */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-body { background: white; border-radius: 10px; max-width: 850px; width: 90%; max-height: 90vh; overflow-y: auto; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+        .modal-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; }
+        
+        /* PRINT STYLES */
+        @media print {
+            body * { visibility: hidden; }
+            #printable-invoice, #printable-invoice * { visibility: visible; }
+            #printable-invoice { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 0; }
+            .modal-overlay { background: none; position: static; }
+            .modal-actions { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="bill-card">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h2>📑 Wholesale Billing & Invoice</h2>
+        <!-- <a href="/admin.html" style="background:#475569; color:white; padding:8px 15px; border-radius:6px; text-decoration:none; font-weight:bold; font-size: 0.85rem;">← Admin Panel</a> -->
+    </div>
+    <hr style="margin: 15px 0;">
+
+    <div class="row">
+        <div class="form-group">
+            <label>Bill Date</label>
+            <input type="date" id="bill_date">
+        </div>
+        <div class="form-group">
+            <label>Select Wholesale Party</label>
+            <select id="party_select" onchange="partyChanged()"></select>
+        </div>
+        <div class="form-group">
+            <label>Previous Balance (₹)</label>
+            <input type="text" id="party_due" value="0" readonly style="background:#f1f5f9; font-weight:700; color:#dc2626;">
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="form-group">
+            <label>Delivery Mode</label>
+            <select id="delivery_mode">
+                <option value="Self Delivery (Personal)">Self Delivery (Personal Hand-Over)</option>
+                <option value="Direct Shop Handover">Direct Shop Handover</option>
+                <option value="Local E-Rickshaw/Auto">Local E-Rickshaw / Auto</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Vehicle / Driver Info (Optional)</label>
+            <input type="text" id="vehicle" placeholder="e.g. Scooter / Driver Name">
+        </div>
+    </div>
+
+    <h4 style="margin-top: 15px;">Add Items to Bill:</h4>
+    <div class="row" style="margin-top:8px; background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+        <div class="form-group" style="flex: 1.5;">
+            <label>Select Article</label>
+            <select id="item_art" onchange="articleSelected()">
+                <option value="">-- Choose Article --</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Size Range</label>
+            <select id="item_size">
+                <optgroup label="Size Sets">
+                    <option value="6*9">6*9</option>
+                    <option value="6*10">6*10</option>
+                    <option value="5*8">5*8</option>
+                    <option value="1*3">1*3</option>
+                    <option value="4*7">4*7</option>
+                    <option value="11*1">11*1</option>
+                </optgroup>
+                <optgroup label="Single Size">
+                    <option value="6">Size 6</option>
+                    <option value="7">Size 7</option>
+                    <option value="8">Size 8</option>
+                    <option value="9">Size 9</option>
+                    <option value="10">Size 10</option>
+                </optgroup>
+            </select>
+        </div>
+        <div class="form-group"><label>Color</label><input type="text" id="item_color" placeholder="Black"></div>
+        <div class="form-group"><label>MRP (₹)</label><input type="number" id="item_mrp" placeholder="0"></div>
+        <div class="form-group"><label>Rate/Pair (₹)</label><input type="number" id="item_rate" placeholder="125"></div>
+        <div class="form-group"><label>Cartons (Peti)</label><input type="number" id="item_cartons" value="0"></div>
+        <div class="form-group"><label>Loose Pairs</label><input type="number" id="item_loose" value="0"></div>
+        <div class="form-group" style="flex: 0.6;"><label>&nbsp;</label><button style="padding: 10px; background: #10b981; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;" onclick="addItem()">+ Add</button></div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Article Code</th>
+                <th>Size</th>
+                <th>Color</th>
+                <th>MRP</th>
+                <th>Quantity</th>
+                <th>Total Pairs</th>
+                <th>Rate/Pr</th>
+                <th>Total Amount</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="bill_items"></tbody>
+    </table>
+
+    <div class="row" style="margin-top: 20px;">
+        <div class="form-group">
+            <label>Today's Bill Total (₹)</label>
+            <input type="text" id="bill_total" value="0" readonly style="font-weight:700; font-size:1.1rem;">
+        </div>
+        <div class="form-group">
+            <label>Amount Paid Today (Jama) (₹)</label>
+            <input type="number" id="paid_today" value="0" oninput="calcNet()" style="font-size:1.1rem;">
+        </div>
+        <div class="form-group">
+            <label>Net Total Remaining Due (₹)</label>
+            <input type="text" id="net_due" value="0" readonly style="font-weight:700; color:#dc2626; font-size:1.1rem;">
+        </div>
+    </div>
+
+    <button class="btn" onclick="submitBill()">Save & Generate Bill</button>
+</div>
+
+<!-- BILL HISTORY -->
+<div class="bill-card">
+    <h3>📜 Recent Bills History</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Bill #</th>
+                <th>Date</th>
+                <th>Party Name</th>
+                <th>Bill Amount</th>
+                <th>Paid</th>
+                <th>Due Balance</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="bill_history"></tbody>
+    </table>
+</div>
+
+<!-- PREVIEW MODAL POPUP -->
+<div id="previewModal" class="modal-overlay">
+    <div class="modal-body">
+        <div class="modal-actions">
+            <h3 style="margin: 0; color: #0284c7;">👁️ Bill Preview</h3>
+            <div>
+                <button onclick="window.print()" style="background: #2563eb; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-right: 5px;">🖨️ Print</button>
+                <button onclick="downloadPDFFromPreview()" style="background: #059669; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-right: 5px;">📥 Download PDF</button>
+                <button onclick="closePreview()" style="background: #64748b; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-weight: bold; cursor: pointer;">❌ Close</button>
+            </div>
+        </div>
+        <!-- Invoice Template Container -->
+        <div id="printable-invoice"></div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('bill_date').valueAsDate = new Date();
+    let customers = [];
+    let masterArticles = [];
+    let items = [];
+    let currentPreviewBillId = null;
+
+    async function init() {
+        try {
+            const cRes = await fetch('/api/customers');
+            customers = await cRes.json();
+            
+            const aRes = await fetch('/api/articles');
+            masterArticles = await aRes.json();
+
+            const selParty = document.getElementById('party_select');
+            selParty.innerHTML = '<option value="">-- Select Party --</option>';
+            customers.forEach(c => {
+                selParty.innerHTML += `<option value="${c.id}">${c.name} (${c.city || ''})</option>`;
+            });
+
+            const selArt = document.getElementById('item_art');
+            selArt.innerHTML = '<option value="">-- Choose Article --</option>';
+            masterArticles.forEach(a => {
+                selArt.innerHTML += `<option value="${a.article_no}">${a.article_no} - ${a.brand || ''} (Rate: ₹${a.wholesale_rate || 0})</option>`;
+            });
+
+            loadBillHistory();
+        } catch(e) {
+            console.error("Init Error:", e);
+        }
+    }
+
+    function articleSelected() {
+        const artCode = document.getElementById('item_art').value;
+        const article = masterArticles.find(a => a.article_no === artCode);
+
+        if(article) {
+            document.getElementById('item_color').value = article.color || 'Standard';
+            document.getElementById('item_mrp').value = article.mrp || 0;
+            document.getElementById('item_rate').value = article.wholesale_rate || 0;
+            if(article.size_type) {
+                document.getElementById('item_size').value = article.size_type;
+            }
+        }
+    }
+
+    function partyChanged() {
+        const id = document.getElementById('party_select').value;
+        const c = customers.find(x => x.id == id);
+        if(c) {
+            document.getElementById('party_due').value = c.previous_due || 0;
+        } else {
+            document.getElementById('party_due').value = 0;
+        }
+        calcNet();
+    }
+
+    function addItem() {
+        const art = document.getElementById('item_art').value;
+        const size = document.getElementById('item_size').value;
+        const color = document.getElementById('item_color').value;
+        const mrp = parseFloat(document.getElementById('item_mrp').value || 0);
+        const rate = parseFloat(document.getElementById('item_rate').value || 0);
+        const cartons = parseInt(document.getElementById('item_cartons').value || 0);
+        const loose = parseInt(document.getElementById('item_loose').value || 0);
+
+        if(!art) { alert("Article select karein!"); return; }
+
+        const totalPairs = (cartons * 12) + loose;
+        if(totalPairs <= 0) { alert("Cartons ya Loose pairs ka count dalein!"); return; }
+
+        const amt = totalPairs * rate;
+        const qtyDesc = cartons > 0 ? `${cartons} Peti + ${loose} Loose Prs` : `${loose} Loose Prs`;
+
+        items.push({ 
+            article_no: art, 
+            size_set: size, 
+            color: color, 
+            mrp: mrp, 
+            cartons: cartons, 
+            loose: loose, 
+            pairs: totalPairs, 
+            qtyDesc: qtyDesc, 
+            rate: rate, 
+            amt: amt 
+        });
+        
+        document.getElementById('item_art').value = '';
+        document.getElementById('item_color').value = '';
+        document.getElementById('item_mrp').value = '';
+        document.getElementById('item_rate').value = '';
+        document.getElementById('item_cartons').value = '0';
+        document.getElementById('item_loose').value = '0';
+
+        renderItems();
+    }
+
+    function removeItem(index) {
+        items.splice(index, 1);
+        renderItems();
+    }
+
+    function renderItems() {
+        const tbody = document.getElementById('bill_items');
+        tbody.innerHTML = '';
+        let tot = 0;
+        items.forEach((i, idx) => {
+            tot += i.amt;
+            tbody.innerHTML += `
+                <tr>
+                    <td><b>${i.article_no}</b></td>
+                    <td>${i.size_set}</td>
+                    <td>${i.color}</td>
+                    <td>₹${i.mrp}</td>
+                    <td>${i.qtyDesc}</td>
+                    <td><b>${i.pairs} Prs</b></td>
+                    <td>₹${i.rate}</td>
+                    <td><b>₹${i.amt}</b></td>
+                    <td><button onclick="removeItem(${idx})" style="background:#ef4444; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">❌</button></td>
+                </tr>
+            `;
+        });
+        document.getElementById('bill_total').value = tot;
+        calcNet();
+    }
+
+    function calcNet() {
+        const prev = parseFloat(document.getElementById('party_due').value || 0);
+        const bill = parseFloat(document.getElementById('bill_total').value || 0);
+        const paid = parseFloat(document.getElementById('paid_today').value || 0);
+        document.getElementById('net_due').value = (prev + bill) - paid;
+    }
+
+    async function submitBill() {
+        const partyId = document.getElementById('party_select').value;
+        const party = customers.find(x => x.id == partyId);
+
+        if(!party) { alert("Wholesale Party select karein!"); return; }
+        if(items.length === 0) { alert("Bill mein kam se kam 1 item add karein!"); return; }
+
+        const data = {
+            bill_date: document.getElementById('bill_date').value,
+            customer_id: partyId,
+            customer_name: party.name,
+            delivery_mode: document.getElementById('delivery_mode').value,
+            vehicle_no: document.getElementById('vehicle').value,
+            items: items,
+            total_amount: parseFloat(document.getElementById('bill_total').value || 0),
+            paid_amount: parseFloat(document.getElementById('paid_today').value || 0),
+            remaining_due: parseFloat(document.getElementById('net_due').value || 0)
+        };
+
+        try {
+            const res = await fetch('/api/wholesale-bill', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+
+            const result = await res.json();
+
+            if(res.ok) {
+                alert("Wholesale Bill Successfully Save Ho Gaya!");
+                openBillPreview(result.bill_id);
+            } else {
+                alert("Error: " + (result.error || "Bill save nahi hua"));
+            }
+        } catch(e) {
+            alert("Network Error: Server se connect nahi ho paya!");
+        }
+    }
+
+    async function loadBillHistory() {
+        try {
+            const res = await fetch('/api/bills');
+            const bills = await res.json();
+            const tbody = document.getElementById('bill_history');
+            tbody.innerHTML = '';
+            bills.forEach(b => {
+                const isCancelled = b.status === 'CANCELLED';
+                tbody.innerHTML += `
+                    <tr>
+                        <td><b>#${b.id}</b></td>
+                        <td>${b.bill_date}</td>
+                        <td><b>${b.customer_name}</b></td>
+                        <td>₹${b.total_amount}</td>
+                        <td>₹${b.paid_amount}</td>
+                        <td style="color:#dc2626; font-weight:bold;">₹${b.remaining_due}</td>
+                        <td><span class="${isCancelled ? 'tag-cancelled' : 'tag-active'}">${b.status}</span></td>
+                        <td>
+                            <button class="btn-preview" onclick="openBillPreview(${b.id})">👁️ View / Print</button>
+                            ${!isCancelled ? `<button class="btn-cancel" onclick="cancelBill(${b.id})">❌ Cancel</button>` : `<small style="color:#94a3b8;">Cancelled</small>`}
+                        </td>
+                    </tr>
+                `;
+            });
+        } catch(e) {
+            console.error("History Error:", e);
+        }
+    }
+
+    async function cancelBill(billId) {
+        if(confirm(`Kya aap Bill #${billId} ko Cancel karna chahte hain?`)) {
+            const res = await fetch('/api/cancel-bill', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ bill_id: billId })
+            });
+            const r = await res.json();
+            alert(r.message || r.error);
+            if(res.ok) window.location.reload();
+        }
+    }
+
+    // OPEN PREVIEW MODAL WITH FULL CUSTOMER DETAILS
+    async function openBillPreview(billId) {
+        currentPreviewBillId = billId;
+        try {
+            const res = await fetch('/api/bills');
+            const bills = await res.json();
+            const bill = bills.find(b => b.id == billId);
+
+            if(!bill) { alert("Bill details nahi mil paaye!"); return; }
+
+            // Customer address/phone Details find karna
+            const custInfo = customers.find(c => c.id == bill.customer_id) || {};
+            const custPhone = custInfo.mobile || custInfo.phone || 'N/A';
+            const custAddress = [custInfo.address, custInfo.city].filter(Boolean).join(', ') || 'N/A';
+
+            const itemRes = await fetch(`/api/bill-items/${billId}`);
+            const billItems = await itemRes.json();
+
+            let rowsHtml = '';
+            let totalPairs = 0;
+
+            billItems.forEach((item, index) => {
+                totalPairs += item.pairs;
+                rowsHtml += `
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: center;">${index + 1}</td>
+                        <td style="padding: 8px; border: 1px solid #cbd5e1;"><b>${item.article_no}</b></td>
+                        <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: center;">${item.size}</td>
+                        <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: center;">${item.color || '-'}</td>
+                        <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: center;"><b>${item.pairs}</b> Prs</td>
+                        <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: right;">₹${item.mrp || 0}</td>
+                        <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: right;">₹${item.rate}</td>
+                        <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: right;"><b>₹${item.amount}</b></td>
+                    </tr>
+                `;
+            });
+
+            const template = `
+                <div style="padding: 20px; background: white; font-family: Arial, sans-serif; color: #0f172a; border: 1px solid #cbd5e1; border-radius: 6px;">
+                    <!-- HEADER -->
+                    <table style="width: 100%; border-bottom: 2px solid #2563eb; padding-bottom: 10px; margin-bottom: 15px;">
+                        <tr>
+                            <td style="border:none;">
+                                <h2 style="margin: 0; color: #2563eb; font-size: 22px;">WHOLESALE FOOTWEAR ERP</h2>
+                                <p style="margin: 3px 0 0 0; font-size: 12px; color: #64748b;">Wholesale Footwear Distribution & Billing</p>
+                            </td>
+                            <td style="border:none; text-align: right;">
+                                <h3 style="margin: 0; font-size: 18px; color: #0f172a;">INVOICE / BILL</h3>
+                                <p style="margin: 3px 0 0 0; font-size: 14px; color: #0284c7; font-weight: bold;">Bill No: #${bill.id}</p>
+                                <p style="margin: 2px 0 0 0; font-size: 12px; color: #475569;">Date: ${bill.bill_date}</p>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <!-- PARTY & DELIVERY INFO (WITH ADDRESS & PHONE) -->
+                    <table style="width: 100%; background: #f8fafc; padding: 12px; border-radius: 6px; margin-bottom: 15px; font-size: 13px;">
+                        <tr>
+                            <td style="border:none; width: 55%; vertical-align: top;">
+                                <span style="color: #64748b; font-size: 11px; font-weight: bold; text-transform: uppercase;">Billed To:</span><br>
+                                <strong style="font-size: 16px; color: #0f172a;">${bill.customer_name}</strong><br>
+                                <span style="color: #334155; display: inline-block; margin-top: 3px;">📍 <b>Address:</b> ${custAddress}</span><br>
+                                <span style="color: #334155; display: inline-block; margin-top: 2px;">📞 <b>Phone:</b> ${custPhone}</span>
+                            </td>
+                            <td style="border:none; width: 45%; text-align: right; vertical-align: top;">
+                                <strong>Delivery Mode:</strong> ${bill.delivery_mode || 'Handover'}<br>
+                                <strong>Vehicle/Note:</strong> ${bill.vehicle_no || 'N/A'}
+                            </td>
+                        </tr>
+                    </table>
+
+                    <!-- ITEMS TABLE -->
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 13px;">
+                        <thead>
+                            <tr style="background: #f1f5f9; color: #0f172a;">
+                                <th style="padding: 8px; border: 1px solid #cbd5e1; text-align: center;">#</th>
+                                <th style="padding: 8px; border: 1px solid #cbd5e1; text-align: left;">Article Code</th>
+                                <th style="padding: 8px; border: 1px solid #cbd5e1; text-align: center;">Size</th>
+                                <th style="padding: 8px; border: 1px solid #cbd5e1; text-align: center;">Color</th>
+                                <th style="padding: 8px; border: 1px solid #cbd5e1; text-align: center;">Pairs</th>
+                                <th style="padding: 8px; border: 1px solid #cbd5e1; text-align: right;">MRP</th>
+                                <th style="padding: 8px; border: 1px solid #cbd5e1; text-align: right;">Rate/Pr</th>
+                                <th style="padding: 8px; border: 1px solid #cbd5e1; text-align: right;">Total Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHtml}
+                        </tbody>
+                    </table>
+
+                    <!-- FOOTER TOTALS -->
+                    <table style="width: 100%; border-top: 1px solid #e2e8f0; padding-top: 10px; font-size: 13px;">
+                        <tr>
+                            <td style="border:none; vertical-align: top; color: #64748b;">
+                                <p style="margin: 0;"><strong>Total Quantity:</strong> ${totalPairs} Pairs</p>
+                                <p style="margin: 5px 0 0 0; font-style: italic;">Thank you for your business!</p>
+                            </td>
+                            <td style="border:none; text-align: right; width: 260px;">
+                                <table style="width: 100%; font-size: 13px;">
+                                    <tr>
+                                        <td style="border:none; text-align: right; padding: 2px 0;">Today's Bill Total:</td>
+                                        <td style="border:none; text-align: right; padding: 2px 0; font-weight: bold;">₹${bill.total_amount}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border:none; text-align: right; padding: 2px 0; color: #166534;">Paid (Jama):</td>
+                                        <td style="border:none; text-align: right; padding: 2px 0; font-weight: bold; color: #166534;">₹${bill.paid_amount}</td>
+                                    </tr>
+                                    <tr style="font-size: 15px; color: #dc2626;">
+                                        <td style="border:none; text-align: right; padding: 5px 0; border-top: 2px solid #000;"><strong>Balance Due:</strong></td>
+                                        <td style="border:none; text-align: right; padding: 5px 0; border-top: 2px solid #000;"><strong>₹${bill.remaining_due}</strong></td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            `;
+
+            document.getElementById('printable-invoice').innerHTML = template;
+            document.getElementById('previewModal').style.display = 'flex';
+
+        } catch(e) {
+            console.error("Preview Error:", e);
+            alert("Preview load karne me dikkat aayi: " + e.message);
+        }
+    }
+
+    function closePreview() {
+        document.getElementById('previewModal').style.display = 'none';
+        loadBillHistory();
+    }
+
+    function downloadPDFFromPreview() {
+        const element = document.getElementById('printable-invoice');
+        const opt = {
+            margin:       10,
+            filename:     `Bill_#${currentPreviewBillId}.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf().set(opt).from(element).save();
+    }
+
+    init();
+</script>
+</body>
+</html>

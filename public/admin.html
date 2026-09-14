@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wholesale ERP - Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #1e293b; --accent: #2563eb; --bg-body: #f1f5f9; --card-bg: #ffffff; --border-color: #cbd5e1; }
+        * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; padding: 0; }
+        body { background-color: var(--bg-body); padding: 20px; color: #0f172a; }
+        .navbar { background: var(--primary); padding: 18px 24px; border-radius: 12px; color: white; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+        .nav-btn { background: var(--accent); color: white; text-decoration: none; padding: 10px 18px; border-radius: 8px; font-weight: 600; }
+        .grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        @media (min-width: 1024px) { .grid { grid-template-columns: 1fr 1fr; } }
+        .card { background: var(--card-bg); border-radius: 12px; padding: 20px; border: 1px solid var(--border-color); }
+        .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+        .form-group { flex: 1; min-width: 130px; }
+        label { display: block; font-weight: 600; font-size: 0.75rem; color: #475569; margin-bottom: 4px; text-transform: uppercase; }
+        input, select { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.9rem; }
+        button { width: 100%; padding: 12px; background-color: var(--accent); color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; margin-top: 8px; }
+        .btn-sm { width: auto; padding: 5px 10px; font-size: 0.75rem; margin: 0; }
+        .btn-danger { background-color: #ef4444; }
+        .btn-success { background-color: #10b981; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 10px; border-bottom: 1px solid var(--border-color); text-align: left; font-size: 0.85rem; }
+        th { background: #e2e8f0; font-weight: 700; }
+        .alert { padding: 10px; border-radius: 6px; margin-top: 10px; font-weight: 600; font-size: 0.85rem; }
+        .alert-success { background: #dcfce7; color: #166534; }
+    </style>
+</head>
+<body>
+
+    <div class="navbar">
+        <h2>🏢 Wholesale ERP - Admin Panel</h2>
+        <a href="/wholesale-bill.html" class="nav-btn">📑 Make Wholesale Bill</a>
+    </div>
+
+    <div class="grid">
+        
+        <!-- 1. ADD PARTY -->
+        <div class="card">
+            <div class="card-title">👥 Add Wholesale Party / Retailer</div>
+            <div class="row">
+                <div class="form-group"><label>Party Name / Shop</label><input type="text" id="c_name" placeholder="Sharma Footwear"></div>
+                <div class="form-group"><label>Mobile Number</label><input type="text" id="c_phone" placeholder="9876543210"></div>
+            </div>
+            <div class="row">
+                <div class="form-group"><label>City</label><input type="text" id="c_city" placeholder="Jaipur"></div>
+                <div class="form-group"><label>Opening Balance Due (₹)</label><input type="number" id="c_due" placeholder="0"></div>
+            </div>
+            <button onclick="addCustomer()">+ Save Party Profile</button>
+            <div id="c_alert"></div>
+        </div>
+
+        <!-- 2. MASTER ARTICLE SETUP (WITH MRP & RATES) -->
+        <div class="card">
+            <div class="card-title">📦 Master Article Setup (With Prices)</div>
+            <div class="row">
+                <div class="form-group"><label>Article Code</label><input type="text" id="art_no" placeholder="FLITE-01"></div>
+                <div class="form-group"><label>Brand</label><input type="text" id="brand" placeholder="Relaxo / Flite"></div>
+            </div>
+            <div class="row">
+                <div class="form-group"><label>Color</label><input type="text" id="color" placeholder="Black"></div>
+                <div class="form-group">
+                    <label>Default Size Set</label>
+                    <select id="size_type">
+                        <optgroup label="Size Sets (Wholesale)">
+                            <option value="6*9">6*9 (Gents)</option>
+                            <option value="6*10">6*10 (Gents Large)</option>
+                            <option value="5*8">5*8 (Ladies)</option>
+                            <option value="1*3">1*3 (Kids Small)</option>
+                            <option value="4*7">4*7 (Kids Large)</option>
+                            <option value="11*1">11*1 (Boys)</option>
+                        </optgroup>
+                        <optgroup label="Single Sizes">
+                            <option value="6">Size 6</option>
+                            <option value="7">Size 7</option>
+                            <option value="8">Size 8</option>
+                            <option value="9">Size 9</option>
+                            <option value="10">Size 10</option>
+                        </optgroup>
+                    </select>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group"><label>MRP / Pair (₹)</label><input type="number" id="mrp" placeholder="249"></div>
+                <div class="form-group"><label>Wholesale Selling Rate / Pair (₹)</label><input type="number" id="wholesale_rate" placeholder="125"></div>
+                <div class="form-group"><label>Pairs In Peti</label><input type="number" id="prs_per_box" value="12"></div>
+            </div>
+            <button onclick="addArticle()">+ Save Master Article</button>
+            <div id="art_alert"></div>
+        </div>
+
+        <!-- 3. STOCK INWARD -->
+        <div class="card" style="grid-column: span 1;">
+            <div class="card-title">📦 Stock Inward Entry (Godown)</div>
+            <div class="row">
+                <div class="form-group"><label>Date</label><input type="date" id="p_date"></div>
+                <div class="form-group"><label>Article No</label><input type="text" id="p_art_no" placeholder="FLITE-01"></div>
+                <div class="form-group"><label>Brand</label><input type="text" id="p_brand" placeholder="Relaxo"></div>
+            </div>
+            <div class="row">
+                <div class="form-group">
+                    <label>Size Range</label>
+                    <select id="p_size_set">
+                        <option value="6*9">6*9 (Gents)</option>
+                        <option value="6*10">6*10 (Gents Large)</option>
+                        <option value="5*8">5*8 (Ladies)</option>
+                        <option value="1*3">1*3 (Kids Small)</option>
+                        <option value="4*7">4*7 (Kids Large)</option>
+                        <option value="11*1">11*1 (Boys)</option>
+                        <option value="6">Size 6</option>
+                        <option value="7">Size 7</option>
+                        <option value="8">Size 8</option>
+                        <option value="9">Size 9</option>
+                        <option value="10">Size 10</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Color</label><input type="text" id="p_color" placeholder="Black"></div>
+            </div>
+            <div class="row">
+                <div class="form-group"><label>Full Cartons (Peti)</label><input type="number" id="p_cartons" value="0"></div>
+                <div class="form-group"><label>Loose Pairs</label><input type="number" id="p_loose" value="0"></div>
+                <div class="form-group"><label>Pairs Per Peti</label><input type="number" id="p_pairs_per_box" value="12"></div>
+            </div>
+            <div class="row">
+                <div class="form-group"><label>Purchase Rate / Pair (₹)</label><input type="number" id="p_rate" placeholder="100"></div>
+            </div>
+            <button onclick="submitPurchase()">+ Add Stock To Inventory</button>
+            <div id="purchase_alert"></div>
+        </div>
+
+        <!-- 4. MASTER ARTICLES LIST -->
+        <div class="card" style="grid-column: span 1;">
+            <div class="card-title">
+                <span>📋 Saved Article Masters & Prices</span>
+                <button class="btn-sm" onclick="loadArticles()">↻ Refresh</button>
+            </div>
+            <div style="overflow-x: auto; max-height: 280px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Article</th>
+                            <th>Brand / Color</th>
+                            <th>MRP</th>
+                            <th>Selling Rate</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="articlesTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 5. PARTY LEDGER -->
+        <div class="card" style="grid-column: span 2;">
+            <div class="card-title">
+                <span>📋 Wholesale Parties Ledger</span>
+                <button class="btn-sm" onclick="loadCustomers()">↻ Refresh</button>
+            </div>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Party Name</th>
+                            <th>City</th>
+                            <th>Balance Due</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="customerTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 6. LIVE STOCK -->
+        <div class="card" style="grid-column: span 2;">
+            <div class="card-title">
+                <span>📊 Live Stock Breakdown</span>
+                <button class="btn-sm" onclick="loadStock()">↻ Refresh Stock</button>
+            </div>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Article Code</th>
+                            <th>Brand</th>
+                            <th>Size</th>
+                            <th>Color</th>
+                            <th>Total Stock Pairs</th>
+                            <th>Cartons + Loose Breakdown</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stockTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        document.getElementById('p_date').valueAsDate = new Date();
+
+        async function addCustomer() {
+            const data = {
+                name: document.getElementById('c_name').value,
+                phone: document.getElementById('c_phone').value,
+                city: document.getElementById('c_city').value,
+                previous_due: parseFloat(document.getElementById('c_due').value || 0)
+            };
+            const res = await fetch(`/api/add-customer`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+            const r = await res.json();
+            document.getElementById('c_alert').innerHTML = `<div class="alert alert-success">${r.message || r.error}</div>`;
+            if(res.ok) loadCustomers();
+        }
+
+        async function loadCustomers() {
+            const res = await fetch(`/api/customers`);
+            const data = await res.json();
+            const tbody = document.getElementById('customerTable');
+            tbody.innerHTML = '';
+            data.forEach(c => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><b>${c.name}</b><br><small>${c.phone}</small></td>
+                        <td>${c.city || '-'}</td>
+                        <td style="color:#dc2626; font-weight:700;">₹${c.previous_due}</td>
+                        <td>
+                            <button class="btn-sm btn-success" onclick="receivePayment(${c.id}, '${c.name}')">💵 Jama</button>
+                            <button class="btn-sm btn-danger" onclick="deleteCustomer(${c.id})">🗑️</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function receivePayment(id, name) {
+            const amt = prompt(`${name} se kitne rupaye Jama hue?`);
+            if(amt && !isNaN(amt)) {
+                await fetch(`/api/customer-payment`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({id, amount_paid: parseFloat(amt)}) });
+                loadCustomers();
+            }
+        }
+
+        async function deleteCustomer(id) {
+            if(confirm("Party delete karein?")) {
+                await fetch(`/api/customers/${id}`, { method: 'DELETE' });
+                loadCustomers();
+            }
+        }
+
+        async function addArticle() {
+            const data = {
+                article_no: document.getElementById('art_no').value,
+                brand: document.getElementById('brand').value,
+                color: document.getElementById('color').value,
+                size_type: document.getElementById('size_type').value,
+                mrp: parseFloat(document.getElementById('mrp').value || 0),
+                wholesale_rate: parseFloat(document.getElementById('wholesale_rate').value || 0),
+                pairs_per_box: parseInt(document.getElementById('prs_per_box').value || 12)
+            };
+            const res = await fetch(`/api/add-item`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+            const r = await res.json();
+            document.getElementById('art_alert').innerHTML = `<div class="alert alert-success">${r.message || r.error}</div>`;
+            if(res.ok) loadArticles();
+        }
+
+        async function loadArticles() {
+            const res = await fetch(`/api/articles`);
+            const data = await res.json();
+            const tbody = document.getElementById('articlesTable');
+            tbody.innerHTML = '';
+            data.forEach(a => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><b>${a.article_no}</b></td>
+                        <td>${a.brand} (${a.color})</td>
+                        <td>₹${a.mrp}</td>
+                        <td><b>₹${a.wholesale_rate}</b></td>
+                        <td><button class="btn-sm btn-danger" onclick="deleteArticle(${a.id})">🗑️</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function deleteArticle(id) {
+            if(confirm("Article Master Delete Karein?")) {
+                await fetch(`/api/articles/${id}`, { method: 'DELETE' });
+                loadArticles();
+            }
+        }
+
+        async function submitPurchase() {
+            const data = {
+                entry_date: document.getElementById('p_date').value,
+                article_no: document.getElementById('p_art_no').value,
+                brand: document.getElementById('p_brand').value,
+                size_set: document.getElementById('p_size_set').value,
+                color: document.getElementById('p_color').value,
+                cartons_count: parseInt(document.getElementById('p_cartons').value || 0),
+                loose_pairs: parseInt(document.getElementById('p_loose').value || 0),
+                pairs_per_carton: parseInt(document.getElementById('p_pairs_per_box').value || 12),
+                base_rate: parseFloat(document.getElementById('p_rate').value || 0)
+            };
+            const res = await fetch(`/api/purchase`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
+            const r = await res.json();
+            document.getElementById('purchase_alert').innerHTML = `<div class="alert alert-success">${r.message || r.error}</div>`;
+            if(res.ok) loadStock();
+        }
+
+        async function loadStock() {
+            const res = await fetch(`/api/stock`);
+            const data = await res.json();
+            const tbody = document.getElementById('stockTable');
+            tbody.innerHTML = '';
+            data.forEach(item => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><b>${item.article_no}</b></td>
+                        <td>${item.brand || '-'}</td>
+                        <td>${item.size}</td>
+                        <td>${item.color}</td>
+                        <td><b>${item.stock_pairs} Pairs</b></td>
+                        <td style="color:#059669; font-weight:600;">${item.stock_summary}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        loadCustomers();
+        loadArticles();
+        loadStock();
+    </script>
+</body>
+</html>
