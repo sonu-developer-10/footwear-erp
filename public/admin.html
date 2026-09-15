@@ -1,337 +1,565 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wholesale ERP - Admin Panel</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Wholesale ERP - Admin Panel Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
-        :root { --primary: #1e293b; --accent: #2563eb; --bg-body: #f1f5f9; --card-bg: #ffffff; --border-color: #cbd5e1; }
-        * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; padding: 0; }
-        body { background-color: var(--bg-body); padding: 20px; color: #0f172a; }
-        .navbar { background: var(--primary); padding: 18px 24px; border-radius: 12px; color: white; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
-        .nav-btn { background: var(--accent); color: white; text-decoration: none; padding: 10px 18px; border-radius: 8px; font-weight: 600; }
-        .grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
-        @media (min-width: 1024px) { .grid { grid-template-columns: 1fr 1fr; } }
-        .card { background: var(--card-bg); border-radius: 12px; padding: 20px; border: 1px solid var(--border-color); }
-        .card-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 15px; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
-        .row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
-        .form-group { flex: 1; min-width: 130px; }
-        label { display: block; font-weight: 600; font-size: 0.75rem; color: #475569; margin-bottom: 4px; text-transform: uppercase; }
-        input, select { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.9rem; }
-        button { width: 100%; padding: 12px; background-color: var(--accent); color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; margin-top: 8px; }
-        .btn-sm { width: auto; padding: 5px 10px; font-size: 0.75rem; margin: 0; }
-        .btn-danger { background-color: #ef4444; }
-        .btn-success { background-color: #10b981; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 10px; border-bottom: 1px solid var(--border-color); text-align: left; font-size: 0.85rem; }
-        th { background: #e2e8f0; font-weight: 700; }
-        .alert { padding: 10px; border-radius: 6px; margin-top: 10px; font-weight: 600; font-size: 0.85rem; }
-        .alert-success { background: #dcfce7; color: #166534; }
+        body { background: #f1f5f9; font-size: 13px; } 
+        .card { border-radius: 8px; border: none; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .kpi-card { background: #fff; border-left: 4px solid #0d6efd; }
+        .kpi-card.danger { border-left-color: #dc3545; }
+        .kpi-card.success { border-left-color: #198754; }
+        .kpi-card.warning { border-left-color: #ffc107; }
     </style>
 </head>
 <body>
+    <nav class="navbar navbar-dark bg-dark px-3 mb-3">
+        <span class="navbar-brand mb-0 h1">👥 Wholesale ERP - Admin Panel Pro</span>
+        <div>
+            <a href="/billing" class="btn btn-primary btn-sm fw-bold">📄 Make Wholesale Bill</a>
+            <a href="/staff" class="btn btn-outline-light btn-sm fw-bold ms-2">👨‍💼 Staff Management</a>
+        </div>
+    </nav>
 
-    <div class="navbar">
-        <h2>🏢 Wholesale ERP - Admin Panel</h2>
-        <a href="/wholesale-bill.html" class="nav-btn">📑 Make Wholesale Bill</a>
-    </div>
-
-    <div class="grid">
+    <div class="container-fluid px-4">
         
-        <!-- 1. ADD PARTY -->
-        <div class="card">
-            <div class="card-title">👥 Add Wholesale Party / Retailer</div>
-            <div class="row">
-                <div class="form-group"><label>Party Name / Shop</label><input type="text" id="c_name" placeholder="Sharma Footwear"></div>
-                <div class="form-group"><label>Mobile Number</label><input type="text" id="c_phone" placeholder="9876543210"></div>
-            </div>
-            <div class="row">
-                <div class="form-group"><label>City</label><input type="text" id="c_city" placeholder="Jaipur"></div>
-                <div class="form-group"><label>Opening Balance Due (₹)</label><input type="number" id="c_due" placeholder="0"></div>
-            </div>
-            <button onclick="addCustomer()">+ Save Party Profile</button>
-            <div id="c_alert"></div>
-        </div>
-
-        <!-- 2. MASTER ARTICLE SETUP (WITH MRP & RATES) -->
-        <div class="card">
-            <div class="card-title">📦 Master Article Setup (With Prices)</div>
-            <div class="row">
-                <div class="form-group"><label>Article Code</label><input type="text" id="art_no" placeholder="FLITE-01"></div>
-                <div class="form-group"><label>Brand</label><input type="text" id="brand" placeholder="Relaxo / Flite"></div>
-            </div>
-            <div class="row">
-                <div class="form-group"><label>Color</label><input type="text" id="color" placeholder="Black"></div>
-                <div class="form-group">
-                    <label>Default Size Set</label>
-                    <select id="size_type">
-                        <optgroup label="Size Sets (Wholesale)">
-                            <option value="6*9">6*9 (Gents)</option>
-                            <option value="6*10">6*10 (Gents Large)</option>
-                            <option value="5*8">5*8 (Ladies)</option>
-                            <option value="1*3">1*3 (Kids Small)</option>
-                            <option value="4*7">4*7 (Kids Large)</option>
-                            <option value="11*1">11*1 (Boys)</option>
-                        </optgroup>
-                        <optgroup label="Single Sizes">
-                            <option value="6">Size 6</option>
-                            <option value="7">Size 7</option>
-                            <option value="8">Size 8</option>
-                            <option value="9">Size 9</option>
-                            <option value="10">Size 10</option>
-                        </optgroup>
-                    </select>
+        <!-- KPI METRIC CARDS -->
+        <div class="row g-3 mb-3">
+            <div class="col-md-3">
+                <div class="card p-3 kpi-card danger">
+                    <div class="text-muted fw-bold">TOTAL RECEIVABLE DUE</div>
+                    <h4 class="m-0 fw-bold text-danger" id="kpiTotalDue">₹0</h4>
                 </div>
             </div>
-            <div class="row">
-                <div class="form-group"><label>MRP / Pair (₹)</label><input type="number" id="mrp" placeholder="249"></div>
-                <div class="form-group"><label>Wholesale Selling Rate / Pair (₹)</label><input type="number" id="wholesale_rate" placeholder="125"></div>
-                <div class="form-group"><label>Pairs In Peti</label><input type="number" id="prs_per_box" value="12"></div>
-            </div>
-            <button onclick="addArticle()">+ Save Master Article</button>
-            <div id="art_alert"></div>
-        </div>
-
-        <!-- 3. STOCK INWARD -->
-        <div class="card" style="grid-column: span 1;">
-            <div class="card-title">📦 Stock Inward Entry (Godown)</div>
-            <div class="row">
-                <div class="form-group"><label>Date</label><input type="date" id="p_date"></div>
-                <div class="form-group"><label>Article No</label><input type="text" id="p_art_no" placeholder="FLITE-01"></div>
-                <div class="form-group"><label>Brand</label><input type="text" id="p_brand" placeholder="Relaxo"></div>
-            </div>
-            <div class="row">
-                <div class="form-group">
-                    <label>Size Range</label>
-                    <select id="p_size_set">
-                        <option value="6*9">6*9 (Gents)</option>
-                        <option value="6*10">6*10 (Gents Large)</option>
-                        <option value="5*8">5*8 (Ladies)</option>
-                        <option value="1*3">1*3 (Kids Small)</option>
-                        <option value="4*7">4*7 (Kids Large)</option>
-                        <option value="11*1">11*1 (Boys)</option>
-                        <option value="6">Size 6</option>
-                        <option value="7">Size 7</option>
-                        <option value="8">Size 8</option>
-                        <option value="9">Size 9</option>
-                        <option value="10">Size 10</option>
-                    </select>
+            <div class="col-md-3">
+                <div class="card p-3 kpi-card success">
+                    <div class="text-muted fw-bold">TOTAL GODOWN STOCK</div>
+                    <h4 class="m-0 fw-bold text-success" id="kpiTotalStock">0 Pairs</h4>
                 </div>
-                <div class="form-group"><label>Color</label><input type="text" id="p_color" placeholder="Black"></div>
             </div>
-            <div class="row">
-                <div class="form-group"><label>Full Cartons (Peti)</label><input type="number" id="p_cartons" value="0"></div>
-                <div class="form-group"><label>Loose Pairs</label><input type="number" id="p_loose" value="0"></div>
-                <div class="form-group"><label>Pairs Per Peti</label><input type="number" id="p_pairs_per_box" value="12"></div>
+            <div class="col-md-3">
+                <div class="card p-3 kpi-card warning">
+                    <div class="text-muted fw-bold">ACTIVE PARTIES</div>
+                    <h4 class="m-0 fw-bold text-warning" id="kpiTotalParties">0</h4>
+                </div>
             </div>
-            <div class="row">
-                <div class="form-group"><label>Purchase Rate / Pair (₹)</label><input type="number" id="p_rate" placeholder="100"></div>
-            </div>
-            <button onclick="submitPurchase()">+ Add Stock To Inventory</button>
-            <div id="purchase_alert"></div>
-        </div>
-
-        <!-- 4. MASTER ARTICLES LIST -->
-        <div class="card" style="grid-column: span 1;">
-            <div class="card-title">
-                <span>📋 Saved Article Masters & Prices</span>
-                <button class="btn-sm" onclick="loadArticles()">↻ Refresh</button>
-            </div>
-            <div style="overflow-x: auto; max-height: 280px;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Article</th>
-                            <th>Brand / Color</th>
-                            <th>MRP</th>
-                            <th>Selling Rate</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="articlesTable"></tbody>
-                </table>
+            <div class="col-md-3">
+                <div class="card p-3 kpi-card">
+                    <div class="text-muted fw-bold">MASTER ARTICLES</div>
+                    <h4 class="m-0 fw-bold text-primary" id="kpiTotalArticles">0</h4>
+                </div>
             </div>
         </div>
 
-        <!-- 5. PARTY LEDGER -->
-        <div class="card" style="grid-column: span 2;">
-            <div class="card-title">
-                <span>📋 Wholesale Parties Ledger</span>
-                <button class="btn-sm" onclick="loadCustomers()">↻ Refresh</button>
+        <div class="row g-3">
+            <!-- Add Wholesale Party -->
+            <div class="col-md-6">
+                <div class="card p-3">
+                    <h6 class="fw-bold">👥 Add Wholesale Party / Retailer</h6>
+                    <form id="partyForm" class="row g-2">
+                        <div class="col-md-6"><label>PARTY NAME / SHOP</label><input type="text" id="pName" class="form-control form-control-sm" required></div>
+                        <div class="col-md-6"><label>MOBILE NUMBER</label><input type="text" id="pPhone" class="form-control form-control-sm"></div>
+                        <div class="col-md-6"><label>CITY</label><input type="text" id="pCity" class="form-control form-control-sm"></div>
+                        <div class="col-md-6"><label>OPENING BALANCE DUE (₹)</label><input type="number" id="pDue" class="form-control form-control-sm" value="0"></div>
+                        <div class="col-12"><button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">+ Save Party Profile</button></div>
+                    </form>
+                </div>
             </div>
-            <div style="overflow-x: auto;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Party Name</th>
-                            <th>City</th>
-                            <th>Balance Due</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="customerTable"></tbody>
-                </table>
+
+            <!-- Master Article Setup -->
+            <div class="col-md-6">
+                <div class="card p-3">
+                    <h6 class="fw-bold">📦 Master Article Setup (With Prices)</h6>
+                    <form id="articleForm" class="row g-2">
+                        <div class="col-md-6"><label>ARTICLE CODE</label><input type="text" id="aCode" class="form-control form-control-sm" required></div>
+                        <div class="col-md-6"><label>BRAND</label><input type="text" id="aBrand" class="form-control form-control-sm"></div>
+                        <div class="col-md-6"><label>COLOR</label><input type="text" id="aColor" class="form-control form-control-sm"></div>
+                        <div class="col-md-6"><label>DEFAULT SIZE SET</label>
+                            <select id="aSize" class="form-select form-select-sm">
+                                <option value="1*5">1*5 (Kids / Chote Bacche)</option>
+                                <option value="6*10">6*10 (Kids / Medium)</option>
+                                <option value="4*7">4*7 (Ladies / Womens)</option>
+                                <option value="5*8">5*8 (Ladies / Womens)</option>
+                                <option value="6*9" selected>6*9 (Gents / Mens)</option>
+                                <option value="7*10">7*10 (Gents / Mens)</option>
+                                <option value="11*13">11*13 (Gents Extra Large)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4"><label>MRP / PAIR (₹)</label><input type="number" id="aMrp" class="form-control form-control-sm" value="0"></div>
+                        <div class="col-md-4"><label>WHOLESALE RATE / PAIR (₹)</label><input type="number" id="aRate" class="form-control form-control-sm" value="0"></div>
+                        <div class="col-md-4"><label>PAIRS IN PETI</label><input type="number" id="aPeti" class="form-control form-control-sm" value="12"></div>
+                        <div class="col-12"><button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">+ Save Master Article</button></div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Stock Inward Entry -->
+            <div class="col-md-6">
+                <div class="card p-3">
+                    <h6 class="fw-bold">📦 Stock Inward Entry (Godown)</h6>
+                    <form id="stockForm" class="row g-2">
+                        <div class="col-md-4"><label>DATE</label><input type="date" id="sDate" class="form-control form-control-sm" required></div>
+                        <div class="col-md-4"><label>ARTICLE NO</label><input type="text" id="sCode" class="form-control form-control-sm" required placeholder="Type & Blur"></div>
+                        <div class="col-md-4"><label>BRAND</label><input type="text" id="sBrand" class="form-control form-control-sm"></div>
+                        <div class="col-md-6"><label>SIZE RANGE</label>
+                            <select id="sSize" class="form-select form-select-sm">
+                                <option value="1*5">1*5 (Kids / Chote Bacche)</option>
+                                <option value="6*10">6*10 (Kids / Medium)</option>
+                                <option value="4*7">4*7 (Ladies / Womens)</option>
+                                <option value="5*8">5*8 (Ladies / Womens)</option>
+                                <option value="6*9" selected>6*9 (Gents / Mens)</option>
+                                <option value="7*10">7*10 (Gents / Mens)</option>
+                                <option value="11*13">11*13 (Gents Extra Large)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6"><label>COLOR</label><input type="text" id="sColor" class="form-control form-control-sm"></div>
+                        <div class="col-md-4"><label>FULL CARTONS (PETI)</label><input type="number" id="sCartons" class="form-control form-control-sm" value="0"></div>
+                        <div class="col-md-4"><label>LOOSE PAIRS</label><input type="number" id="sLoose" class="form-control form-control-sm" value="0"></div>
+                        <div class="col-md-4"><label>PAIRS PER PETI</label><input type="number" id="sPetiPairs" class="form-control form-control-sm" value="12"></div>
+                        <div class="col-md-12"><label>PURCHASE RATE / PAIR (₹)</label><input type="number" id="sPurchaseRate" class="form-control form-control-sm" value="0"></div>
+                        <div class="col-12"><button type="submit" class="btn btn-primary btn-sm w-100 fw-bold">+ Add Stock To Inventory</button></div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Saved Master Articles with Edit & Delete -->
+            <div class="col-md-6">
+                <div class="card p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="fw-bold m-0">📑 Saved Article Masters & Prices</h6>
+                        <button class="btn btn-outline-primary btn-sm py-0" onclick="loadArticles()">Refresh</button>
+                    </div>
+                    <div class="table-responsive" style="max-height: 230px;">
+                        <table class="table table-sm table-bordered m-0 align-middle">
+                            <thead class="table-light"><tr><th>Article</th><th>Brand / Color</th><th>MRP</th><th>Selling Rate</th><th>Actions</th></tr></thead>
+                            <tbody id="articleTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wholesale Parties Ledger with EDIT & Whatsapp -->
+            <div class="col-12">
+                <div class="card p-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="fw-bold m-0">📑 Wholesale Parties Ledger</h6>
+                        <div class="d-flex gap-2 w-50 justify-content-end">
+                            <input type="text" id="searchParty" class="form-control form-control-sm w-50" placeholder="🔍 Search Party / City / Mobile..." onkeyup="filterParties()">
+                            <button class="btn btn-success btn-sm fw-bold" onclick="exportLedgerExcel()">📥 Export Excel</button>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered m-0 align-middle" id="ledgerExcelTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Party Name</th>
+                                    <th>Mobile Number</th>
+                                    <th>City</th>
+                                    <th>Balance Due (₹)</th>
+                                    <th>WhatsApp Reminder</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ledgerTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Live Stock Breakdown with EDIT & DELETE -->
+                <div class="card p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="fw-bold m-0">📊 Live Stock Breakdown</h6>
+                        <button class="btn btn-success btn-sm fw-bold" onclick="exportStockExcel()">📥 Export Excel</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered m-0 align-middle" id="stockExcelTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Article Code</th>
+                                    <th>Brand</th>
+                                    <th>Size</th>
+                                    <th>Color</th>
+                                    <th>Total Stock Pairs</th>
+                                    <th>Status</th>
+                                    <th>Cartons + Loose Breakdown</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stockTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+
             </div>
         </div>
-
-        <!-- 6. LIVE STOCK -->
-        <div class="card" style="grid-column: span 2;">
-            <div class="card-title">
-                <span>📊 Live Stock Breakdown</span>
-                <button class="btn-sm" onclick="loadStock()">↻ Refresh Stock</button>
-            </div>
-            <div style="overflow-x: auto;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Article Code</th>
-                            <th>Brand</th>
-                            <th>Size</th>
-                            <th>Color</th>
-                            <th>Total Stock Pairs</th>
-                            <th>Cartons + Loose Breakdown</th>
-                        </tr>
-                    </thead>
-                    <tbody id="stockTable"></tbody>
-                </table>
-            </div>
-        </div>
-
     </div>
 
-    <script>
-        document.getElementById('p_date').valueAsDate = new Date();
+    <!-- MODAL: EDIT PARTY -->
+    <div class="modal fade" id="editPartyModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title fw-bold">✏️ Edit Wholesale Party Details</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <input type="hidden" id="editPartyId">
+                    <div class="mb-2"><label>Party Name</label><input type="text" id="editPartyName" class="form-control form-control-sm"></div>
+                    <div class="mb-2"><label>Mobile Number</label><input type="text" id="editPartyPhone" class="form-control form-control-sm"></div>
+                    <div class="mb-2"><label>City</label><input type="text" id="editPartyCity" class="form-control form-control-sm"></div>
+                    <div class="mb-2"><label>Balance Due (₹)</label><input type="number" id="editPartyDue" class="form-control form-control-sm"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="savePartyEdit()">Update Party Profile</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        async function addCustomer() {
-            const data = {
-                name: document.getElementById('c_name').value,
-                phone: document.getElementById('c_phone').value,
-                city: document.getElementById('c_city').value,
-                previous_due: parseFloat(document.getElementById('c_due').value || 0)
-            };
-            const res = await fetch(`/api/add-customer`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
-            const r = await res.json();
-            document.getElementById('c_alert').innerHTML = `<div class="alert alert-success">${r.message || r.error}</div>`;
-            if(res.ok) loadCustomers();
+    <!-- MODAL: EDIT MASTER ARTICLE -->
+    <div class="modal fade" id="editArticleModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title fw-bold">✏️ Edit Master Article Setup</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <input type="hidden" id="editArticleId">
+                    <div class="mb-2"><label>Article Code</label><input type="text" id="editArticleCode" class="form-control form-control-sm"></div>
+                    <div class="mb-2"><label>Brand</label><input type="text" id="editArticleBrand" class="form-control form-control-sm"></div>
+                    <div class="mb-2"><label>Color</label><input type="text" id="editArticleColor" class="form-control form-control-sm"></div>
+                    <div class="mb-2"><label>Size Set</label>
+                        <select id="editArticleSize" class="form-select form-select-sm">
+                            <option value="1*5">1*5 (Kids)</option>
+                            <option value="6*10">6*10 (Kids Med)</option>
+                            <option value="4*7">4*7 (Ladies)</option>
+                            <option value="5*8">5*8 (Ladies)</option>
+                            <option value="6*9">6*9 (Gents)</option>
+                            <option value="7*10">7*10 (Gents)</option>
+                            <option value="11*13">11*13 (XL Gents)</option>
+                        </select>
+                    </div>
+                    <div class="mb-2"><label>MRP / Pair (₹)</label><input type="number" id="editArticleMrp" class="form-control form-control-sm"></div>
+                    <div class="mb-2"><label>Wholesale Rate / Pair (₹)</label><input type="number" id="editArticleRate" class="form-control form-control-sm"></div>
+                    <div class="mb-2"><label>Pairs In Peti</label><input type="number" id="editArticlePeti" class="form-control form-control-sm"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="saveArticleEdit()">Update Master Article</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: EDIT STOCK -->
+    <div class="modal fade" id="editStockModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title fw-bold">✏️ Update Godown Stock Quantity</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <input type="hidden" id="editStockArticle">
+                    <input type="hidden" id="editStockSize">
+                    <input type="hidden" id="editStockColor">
+                    <div class="mb-2"><label>Full Cartons (Peti)</label><input type="number" id="editStockCartons" class="form-control form-control-sm"></div>
+                    <div class="mb-2"><label>Loose Pairs</label><input type="number" id="editStockLoose" class="form-control form-control-sm"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="saveStockEdit()">Save Stock Adjustment</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('sDate').valueAsDate = new Date();
+        let allParties = [], allArticles = [], allStock = [];
+        let partyModal, articleModal, stockModal;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            partyModal = new bootstrap.Modal(document.getElementById('editPartyModal'));
+            articleModal = new bootstrap.Modal(document.getElementById('editArticleModal'));
+            stockModal = new bootstrap.Modal(document.getElementById('editStockModal'));
+            loadData();
+        });
+
+        async function loadData() {
+            await Promise.all([loadParties(), loadArticles(), loadLiveStock()]);
         }
 
-        async function loadCustomers() {
-            const res = await fetch(`/api/customers`);
-            const data = await res.json();
-            const tbody = document.getElementById('customerTable');
-            tbody.innerHTML = '';
-            data.forEach(c => {
-                tbody.innerHTML += `
+        // 1. Parties Load & Actions
+        async function loadParties() {
+            try {
+                const res = await fetch('/api/customers');
+                allParties = await res.json();
+                
+                const totalDue = allParties.reduce((sum, p) => sum + (p.previous_due || 0), 0);
+                document.getElementById('kpiTotalDue').innerText = `₹${totalDue}`;
+                document.getElementById('kpiTotalParties').innerText = allParties.length;
+
+                renderParties(allParties);
+            } catch (err) { console.error(err); }
+        }
+
+        function renderParties(parties) {
+            const ledgerTable = document.getElementById('ledgerTable');
+            if (!parties || parties.length === 0) {
+                ledgerTable.innerHTML = `<tr><td colspan="6" class="text-center text-muted">Koi party record nahi mila.</td></tr>`;
+                return;
+            }
+            ledgerTable.innerHTML = parties.map(p => {
+                const msg = encodeURIComponent(`Namaste ${p.name} ji, aapka Wholesale Balance ₹${p.previous_due} baaki hai. Kripya payment clear karein.`);
+                const waBtn = p.phone ? `<a href="https://wa.me/91${p.phone}?text=${msg}" target="_blank" class="btn btn-sm btn-outline-success py-0 px-2 fw-bold">📱 Send Reminder</a>` : `<span class="text-muted">-</span>`;
+                
+                return `
                     <tr>
-                        <td><b>${c.name}</b><br><small>${c.phone}</small></td>
-                        <td>${c.city || '-'}</td>
-                        <td style="color:#dc2626; font-weight:700;">₹${c.previous_due}</td>
+                        <td class="fw-bold">${p.name}</td>
+                        <td class="fw-semibold text-secondary">${p.phone ? '📞 ' + p.phone : '-'}</td>
+                        <td>${p.city || '-'}</td>
+                        <td class="text-danger fw-bold">₹${p.previous_due || 0}</td>
+                        <td>${waBtn}</td>
                         <td>
-                            <button class="btn-sm btn-success" onclick="receivePayment(${c.id}, '${c.name}')">💵 Jama</button>
-                            <button class="btn-sm btn-danger" onclick="deleteCustomer(${c.id})">🗑️</button>
+                            <button class="btn btn-warning btn-sm py-0 px-2 me-1 text-dark fw-bold" onclick="openPartyEdit(${p.id})">Edit</button>
+                            <button class="btn btn-outline-danger btn-sm py-0 px-2" onclick="deleteParty(${p.id})">Delete</button>
                         </td>
                     </tr>
                 `;
-            });
+            }).join('');
         }
 
-        async function receivePayment(id, name) {
-            const amt = prompt(`${name} se kitne rupaye Jama hue?`);
-            if(amt && !isNaN(amt)) {
-                await fetch(`/api/customer-payment`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({id, amount_paid: parseFloat(amt)}) });
-                loadCustomers();
-            }
+        function openPartyEdit(id) {
+            const p = allParties.find(x => x.id === id);
+            if (!p) return;
+            document.getElementById('editPartyId').value = p.id;
+            document.getElementById('editPartyName').value = p.name;
+            document.getElementById('editPartyPhone').value = p.phone || '';
+            document.getElementById('editPartyCity').value = p.city || '';
+            document.getElementById('editPartyDue').value = p.previous_due || 0;
+            partyModal.show();
         }
 
-        async function deleteCustomer(id) {
-            if(confirm("Party delete karein?")) {
-                await fetch(`/api/customers/${id}`, { method: 'DELETE' });
-                loadCustomers();
-            }
-        }
-
-        async function addArticle() {
-            const data = {
-                article_no: document.getElementById('art_no').value,
-                brand: document.getElementById('brand').value,
-                color: document.getElementById('color').value,
-                size_type: document.getElementById('size_type').value,
-                mrp: parseFloat(document.getElementById('mrp').value || 0),
-                wholesale_rate: parseFloat(document.getElementById('wholesale_rate').value || 0),
-                pairs_per_box: parseInt(document.getElementById('prs_per_box').value || 12)
+        async function savePartyEdit() {
+            const id = document.getElementById('editPartyId').value;
+            const payload = {
+                name: document.getElementById('editPartyName').value,
+                phone: document.getElementById('editPartyPhone').value,
+                city: document.getElementById('editPartyCity').value,
+                previous_due: parseFloat(document.getElementById('editPartyDue').value) || 0
             };
-            const res = await fetch(`/api/add-item`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
-            const r = await res.json();
-            document.getElementById('art_alert').innerHTML = `<div class="alert alert-success">${r.message || r.error}</div>`;
-            if(res.ok) loadArticles();
+            await fetch(`/api/customers/${id}`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+            partyModal.hide();
+            loadParties();
         }
 
+        function filterParties() {
+            const query = document.getElementById('searchParty').value.toLowerCase();
+            const filtered = allParties.filter(p => 
+                (p.name && p.name.toLowerCase().includes(query)) ||
+                (p.phone && p.phone.toLowerCase().includes(query)) ||
+                (p.city && p.city.toLowerCase().includes(query))
+            );
+            renderParties(filtered);
+        }
+
+        async function deleteParty(id) {
+            if (confirm("Delete Party Profile?")) {
+                await fetch(`/api/customers/${id}`, { method: 'DELETE' });
+                loadParties();
+            }
+        }
+
+        // 2. Articles Master with EDIT & DELETE
         async function loadArticles() {
-            const res = await fetch(`/api/articles`);
-            const data = await res.json();
-            const tbody = document.getElementById('articlesTable');
-            tbody.innerHTML = '';
-            data.forEach(a => {
-                tbody.innerHTML += `
+            try {
+                const res = await fetch('/api/articles');
+                allArticles = await res.json();
+                document.getElementById('kpiTotalArticles').innerText = allArticles.length;
+
+                const articleTable = document.getElementById('articleTable');
+                if (!allArticles || allArticles.length === 0) {
+                    articleTable.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Koi master article save nahi hai.</td></tr>`;
+                    return;
+                }
+                articleTable.innerHTML = allArticles.map(a => `
                     <tr>
-                        <td><b>${a.article_no}</b></td>
-                        <td>${a.brand} (${a.color})</td>
-                        <td>₹${a.mrp}</td>
-                        <td><b>₹${a.wholesale_rate}</b></td>
-                        <td><button class="btn-sm btn-danger" onclick="deleteArticle(${a.id})">🗑️</button></td>
+                        <td class="fw-bold">${a.article_no}</td>
+                        <td>${a.brand || '-'} (${a.color || '-'})</td>
+                        <td>₹${a.mrp || 0}</td>
+                        <td class="text-success fw-bold">₹${a.wholesale_rate || 0}</td>
+                        <td>
+                            <button class="btn btn-warning btn-sm py-0 px-2 me-1 text-dark fw-bold" onclick="openArticleEdit(${a.id})">Edit</button>
+                            <button class="btn btn-outline-danger btn-sm py-0 px-2" onclick="deleteArticle(${a.id})">Delete</button>
+                        </td>
                     </tr>
-                `;
-            });
+                `).join('');
+            } catch (err) { console.error(err); }
+        }
+
+        function openArticleEdit(id) {
+            const a = allArticles.find(x => x.id === id);
+            if (!a) return;
+            document.getElementById('editArticleId').value = a.id;
+            document.getElementById('editArticleCode').value = a.article_no;
+            document.getElementById('editArticleBrand').value = a.brand || '';
+            document.getElementById('editArticleColor').value = a.color || '';
+            document.getElementById('editArticleSize').value = a.size_type || '6*9';
+            document.getElementById('editArticleMrp').value = a.mrp || 0;
+            document.getElementById('editArticleRate').value = a.wholesale_rate || 0;
+            document.getElementById('editArticlePeti').value = a.pairs_per_box || 12;
+            articleModal.show();
+        }
+
+        async function saveArticleEdit() {
+            const id = document.getElementById('editArticleId').value;
+            const payload = {
+                article_no: document.getElementById('editArticleCode').value,
+                brand: document.getElementById('editArticleBrand').value,
+                color: document.getElementById('editArticleColor').value,
+                size_type: document.getElementById('editArticleSize').value,
+                mrp: parseFloat(document.getElementById('editArticleMrp').value) || 0,
+                wholesale_rate: parseFloat(document.getElementById('editArticleRate').value) || 0,
+                pairs_per_box: parseInt(document.getElementById('editArticlePeti').value) || 12
+            };
+            await fetch(`/api/articles/${id}`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+            articleModal.hide();
+            loadArticles();
         }
 
         async function deleteArticle(id) {
-            if(confirm("Article Master Delete Karein?")) {
+            if (confirm("Delete article master?")) {
                 await fetch(`/api/articles/${id}`, { method: 'DELETE' });
                 loadArticles();
             }
         }
 
-        async function submitPurchase() {
-            const data = {
-                entry_date: document.getElementById('p_date').value,
-                article_no: document.getElementById('p_art_no').value,
-                brand: document.getElementById('p_brand').value,
-                size_set: document.getElementById('p_size_set').value,
-                color: document.getElementById('p_color').value,
-                cartons_count: parseInt(document.getElementById('p_cartons').value || 0),
-                loose_pairs: parseInt(document.getElementById('p_loose').value || 0),
-                pairs_per_carton: parseInt(document.getElementById('p_pairs_per_box').value || 12),
-                base_rate: parseFloat(document.getElementById('p_rate').value || 0)
+        // 3. Live Stock Breakdown with EDIT & DELETE
+        async function loadLiveStock() {
+            try {
+                const res = await fetch('/api/stock');
+                allStock = await res.json();
+                
+                const totalPairs = allStock.reduce((sum, s) => sum + (s.stock_pairs || 0), 0);
+                document.getElementById('kpiTotalStock').innerText = `${totalPairs} Pairs`;
+
+                const stockTable = document.getElementById('stockTable');
+                if (!allStock || allStock.length === 0) {
+                    stockTable.innerHTML = `<tr><td colspan="8" class="text-center text-muted">Godown mein abhi koi stock nahi hai.</td></tr>`;
+                    return;
+                }
+
+                stockTable.innerHTML = allStock.map(s => {
+                    const isLow = s.stock_pairs < 60;
+                    const statusBadge = isLow 
+                        ? `<span class="badge bg-danger">⚠️ Low Stock</span>` 
+                        : `<span class="badge bg-success">In Stock</span>`;
+
+                    return `
+                        <tr class="${isLow ? 'table-warning' : ''}">
+                            <td class="fw-bold">${s.article_no}</td>
+                            <td>${s.brand || '-'}</td>
+                            <td>${s.size || '-'}</td>
+                            <td>${s.color || '-'}</td>
+                            <td class="fw-bold text-primary">${s.stock_pairs} Pairs</td>
+                            <td>${statusBadge}</td>
+                            <td><span class="badge bg-secondary">${s.stock_summary}</span></td>
+                            <td>
+                                <button class="btn btn-warning btn-sm py-0 px-2 text-dark fw-bold me-1" onclick="openStockEdit('${s.article_no}', '${s.size}', '${s.color}')">Edit</button>
+                                <button class="btn btn-outline-danger btn-sm py-0 px-2" onclick="deleteStock('${s.article_no}', '${s.size}', '${s.color}')">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (err) { console.error(err); }
+        }
+
+        function openStockEdit(articleNo, size, color) {
+            document.getElementById('editStockArticle').value = articleNo;
+            document.getElementById('editStockSize').value = size;
+            document.getElementById('editStockColor').value = color;
+            document.getElementById('editStockCartons').value = 0;
+            document.getElementById('editStockLoose').value = 0;
+            stockModal.show();
+        }
+
+        async function saveStockEdit() {
+            const payload = {
+                article_no: document.getElementById('editStockArticle').value,
+                size_set: document.getElementById('editStockSize').value,
+                color: document.getElementById('editStockColor').value,
+                cartons_count: parseInt(document.getElementById('editStockCartons').value) || 0,
+                loose_pairs: parseInt(document.getElementById('editStockLoose').value) || 0
             };
-            const res = await fetch(`/api/purchase`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
-            const r = await res.json();
-            document.getElementById('purchase_alert').innerHTML = `<div class="alert alert-success">${r.message || r.error}</div>`;
-            if(res.ok) loadStock();
+            await fetch('/api/stock/update', { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+            stockModal.hide();
+            loadLiveStock();
         }
 
-        async function loadStock() {
-            const res = await fetch(`/api/stock`);
-            const data = await res.json();
-            const tbody = document.getElementById('stockTable');
-            tbody.innerHTML = '';
-            data.forEach(item => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td><b>${item.article_no}</b></td>
-                        <td>${item.brand || '-'}</td>
-                        <td>${item.size}</td>
-                        <td>${item.color}</td>
-                        <td><b>${item.stock_pairs} Pairs</b></td>
-                        <td style="color:#059669; font-weight:600;">${item.stock_summary}</td>
-                    </tr>
-                `;
-            });
+        async function deleteStock(articleNo, size, color) {
+            if (confirm(`Kya aap Article ${articleNo} (${size} / ${color}) ke stock ko delete karna chahte hain?`)) {
+                await fetch('/api/stock/delete', {
+                    method: 'DELETE',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ article_no: articleNo, size_set: size, color: color })
+                });
+                loadLiveStock();
+            }
         }
 
-        loadCustomers();
-        loadArticles();
-        loadStock();
+        // Excel Export
+        function exportLedgerExcel() {
+            const table = document.getElementById("ledgerExcelTable");
+            const wb = XLSX.utils.table_to_book(table, { sheet: "Parties Ledger" });
+            XLSX.writeFile(wb, "Parties_Ledger_Report.xlsx");
+        }
+
+        function exportStockExcel() {
+            const table = document.getElementById("stockExcelTable");
+            const wb = XLSX.utils.table_to_book(table, { sheet: "Stock Report" });
+            XLSX.writeFile(wb, "Live_Stock_Report.xlsx");
+        }
+
+        // Forms Handlers
+        document.getElementById('partyForm').onsubmit = async (e) => {
+            e.preventDefault();
+            await fetch('/api/add-customer', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({
+                name: document.getElementById('pName').value,
+                phone: document.getElementById('pPhone').value,
+                city: document.getElementById('pCity').value,
+                previous_due: parseFloat(document.getElementById('pDue').value) || 0
+            })});
+            e.target.reset(); loadParties();
+        };
+
+        document.getElementById('articleForm').onsubmit = async (e) => {
+            e.preventDefault();
+            await fetch('/api/add-item', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({
+                article_no: document.getElementById('aCode').value,
+                brand: document.getElementById('aBrand').value,
+                color: document.getElementById('aColor').value,
+                size_type: document.getElementById('aSize').value,
+                mrp: parseFloat(document.getElementById('aMrp').value) || 0,
+                wholesale_rate: parseFloat(document.getElementById('aRate').value) || 0,
+                pairs_per_box: parseInt(document.getElementById('aPeti').value) || 12
+            })});
+            e.target.reset(); loadArticles();
+        };
+
+        document.getElementById('stockForm').onsubmit = async (e) => {
+            e.preventDefault();
+            await fetch('/api/purchase', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({
+                entry_date: document.getElementById('sDate').value,
+                article_no: document.getElementById('sCode').value,
+                brand: document.getElementById('sBrand').value,
+                size_set: document.getElementById('sSize').value,
+                color: document.getElementById('sColor').value,
+                cartons_count: parseInt(document.getElementById('sCartons').value) || 0,
+                loose_pairs: parseInt(document.getElementById('sLoose').value) || 0,
+                pairs_per_carton: parseInt(document.getElementById('sPetiPairs').value) || 12,
+                base_rate: parseFloat(document.getElementById('sPurchaseRate').value) || 0
+            })});
+            e.target.reset();
+            document.getElementById('sDate').valueAsDate = new Date();
+            loadLiveStock();
+        };
     </script>
 </body>
 </html>
